@@ -756,12 +756,14 @@ final class CoverageEngine: @unchecked Sendable {
       let t = obj.transform, d = obj.dimensions
       let x = simd_make_float3(t.columns.0), y = simd_make_float3(t.columns.1), z = simd_make_float3(t.columns.2)
       let c = simd_make_float3(t.columns.3)
-      // top + four sides
-      for (off, n, w, h, ax, ay) in [
-        (y * d.y / 2, y, d.x, d.z, x, z),
-        (z * d.z / 2, z, d.x, d.y, x, y), (-z * d.z / 2, -z, d.x, d.y, x, y),
-        (x * d.x / 2, x, d.z, d.y, z, y), (-x * d.x / 2, -x, d.z, d.y, z, y),
-      ] {
+      // top + four sides (explicitly typed: Xcode 26's type checker times out on the inferred literal)
+      let ox: SIMD3<Float> = x * d.x / 2, oy: SIMD3<Float> = y * d.y / 2, oz: SIMD3<Float> = z * d.z / 2
+      let faces: [(SIMD3<Float>, SIMD3<Float>, Float, Float, SIMD3<Float>, SIMD3<Float>)] = [
+        (oy, y, d.x, d.z, x, z),
+        (oz, z, d.x, d.y, x, y), (-oz, -z, d.x, d.y, x, y),
+        (ox, x, d.z, d.y, z, y), (-ox, -x, d.z, d.y, z, y),
+      ]
+      for (off, n, w, h, ax, ay) in faces {
         var m = matrix_identity_float4x4
         m.columns.0 = SIMD4(ax, 0); m.columns.1 = SIMD4(ay, 0); m.columns.2 = SIMD4(n, 0); m.columns.3 = SIMD4(c + off, 1)
         surface(m, w, h, n)
